@@ -1375,7 +1375,7 @@ function Projects() {
         "Tailwind CSS"
       ],
       github: "https://github.com/deva-harsha-v/library-management-system",
-      live: "",
+      live: "https://library-management-system-blush-one.vercel.app",
     },
     {
       num: "11",
