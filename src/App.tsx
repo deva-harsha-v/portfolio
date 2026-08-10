@@ -617,7 +617,7 @@ function Hero() {
                 background: "linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%)",
               }}>
                 <div style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(222,219,200,0.4)", fontWeight: 300, marginBottom: 4 }}>
-                  Full-Stack · AI Engineer
+                  Full-Stack
                 </div>
                 <div style={{ fontSize: 13, letterSpacing: "0.06em", color: "rgba(222,219,200,0.7)", fontWeight: 300 }}>
                   Based in Andhra Pradesh, India
@@ -657,32 +657,27 @@ function Skills() {
   const groups = [
     {
       label: "Languages",
-      pills: ["Python", "TypeScript", "Java", "C", "SQL"],
+      pills: ["Python", "TypeScript"],
       variant: "default",
     },
     {
       label: "Frontend",
-      pills: ["Next.js", "React", "HTML5", "CSS3", "JavaScript", "Tailwind CSS"],
+      pills: ["Next.js", "React"],
       variant: "alt",
     },
     {
       label: "Backend",
-      pills: ["Node.js", "Express.js", "Flask", "REST APIs"],
+      pills: ["Node.js", "Django"],
       variant: "alt",
     },
     {
-      label: "AI & ML",
-      pills: ["Gemini API", "Ollama", "LangChain", "RAG", "Prompt Engineering"],
-      variant: "default",
-    },
-    {
       label: "Auth & Security",
-      pills: ["NextAuth.js", "Google OAuth", "MFA (OTP)", "JWT"],
+      pills: ["NextAuth.js", "JWT"],
       variant: "neutral",
     },
     {
       label: "Databases",
-      pills: ["Supabase (PostgreSQL)", "MongoDB", "Prisma ORM"],
+      pills: ["PostgreSQL", "MySQL", "Supabase"],
       variant: "neutral",
     },
     {
@@ -1334,6 +1329,77 @@ function Projects() {
       github: "https://github.com/deva-harsha-v/bolisetti-blue-waves",
       live: "https://bolisetti-blue-waves.vercel.app",
     },
+    {
+      num: "09",
+      title: "Curriculum Management System",
+      subtitle: "Role-Based Academic Platform",
+      desc: "A role-based Curriculum Management System built with Django for managing academic curricula, course outcomes (COs), program outcomes (POs), graduate attributes, departments, and version-controlled curriculum workflows.",
+      problem: "Academic institutions often struggle to maintain, version, and align curricula with outcome-based education standards across departments. This system centralizes curriculum design, tracking, and compliance in one role-based platform.",
+      future: [
+        "Automated CO-PO mapping analytics",
+        "Bulk curriculum import/export",
+        "Multi-institution support",
+        "Accreditation report generation",
+        "Notification system for curriculum revisions",
+        "REST API for external integrations"
+      ],
+      tags: [
+        "Django",
+        "Python",
+        "Role-Based Access",
+        "PDF Generation"
+      ],
+      github: "https://github.com/deva-harsha-v/curriculum-management-system",
+      live: "",
+    },
+    {
+      num: "10",
+      title: "Library Management System",
+      subtitle: "Full-Stack Book & Member Platform",
+      desc: "A production-ready full-stack Library Management System built with React.js, Spring Boot, PostgreSQL, and JWT Authentication featuring secure role-based access, book/member management, issue-return workflows, overdue tracking, and RESTful API integration.",
+      problem: "Traditional library systems often lack modern web interfaces and secure role-based workflows for managing books, members, and lending cycles efficiently. This system provides a scalable, secure, full-stack solution for real-world library operations.",
+      future: [
+        "Barcode/QR scanning for books",
+        "Fine payment gateway integration",
+        "Email/SMS overdue reminders",
+        "Advanced search & recommendation engine",
+        "Mobile app companion",
+        "Analytics dashboard for library usage"
+      ],
+      tags: [
+        "React",
+        "TypeScript",
+        "Spring Boot",
+        "PostgreSQL",
+        "JWT",
+        "Tailwind CSS"
+      ],
+      github: "https://github.com/deva-harsha-v/library-management-system",
+      live: "",
+    },
+    {
+      num: "11",
+      title: "DigiHealth ID",
+      subtitle: "Digital Health Card & Member Profile System",
+      desc: "A Digital Health Card & Member Profile Management System — a vanilla JS multi-page app for enrolling members, tracking vaccinations, and generating printable digital health ID cards.",
+      problem: "Manual health record and vaccination tracking is error-prone and hard to access on demand. DigiHealth ID digitizes member enrollment, health tracking, and ID generation into one lightweight, dependency-free web app.",
+      future: [
+        "Backend database integration (replace localStorage)",
+        "QR code verification for health cards",
+        "Multi-admin role support",
+        "Vaccination reminder notifications",
+        "Data export/reporting enhancements",
+        "Cloud sync across devices"
+      ],
+      tags: [
+        "JavaScript",
+        "HTML/CSS",
+        "LocalStorage",
+        "Vanilla JS"
+      ],
+      github: "https://github.com/deva-harsha-v/health-card-system",
+      live: "https://digihealthid.netlify.app",
+    },
   ];
 
   return (
@@ -1514,12 +1580,14 @@ function Projects() {
                         onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.3)"; }}>
                         <GithubIcon size={12} /> GitHub
                       </a>
-                      <a href={p.live} target="_blank" rel="noopener noreferrer"
-                        style={{ color: "rgba(222,219,200,0.3)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.3)"; }}>
-                        <ExternalLink size={12} /> Live
-                      </a>
+                      {p.live && (
+                        <a href={p.live} target="_blank" rel="noopener noreferrer"
+                          style={{ color: "rgba(222,219,200,0.3)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.3)"; }}>
+                          <ExternalLink size={12} /> Live
+                        </a>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -1609,19 +1677,21 @@ function Internships() {
       status: "completed",
     },
     {
-      role: "Summer Intern",
-      org: "NIT — Dept. of Computer Science & Engineering",
-      duration: "Summer 2026",
-      domain: "CSE",
-      desc: "Summer internship with the CSE department at NIT. Certificate expected in the coming weeks.",
-      status: "upcoming",
+      role: "Full Stack Developer Intern",
+      org: "NIT — Dept. of Electrical & Electronics Engineering",
+      duration: "May - Jun 2026",
+      domain: "EEE",
+      desc: "Completed a Full Stack Developer Internship at NIT Andhra Pradesh, focused on developing a laboratory management platform with secure REST APIs, JWT authentication, role-based access control, and PostgreSQL.",
+      link: "https://drive.google.com/file/d/1DCoq5nAOz6E8RkweE8lrmzL175xMkiGf/view?usp=sharing",
+      status: "completed",
     },
     {
-      role: "Summer Intern",
-      org: "NIT — Dept. of Electrical & Electronics Engineering",
-      duration: "Summer 2026",
-      domain: "EEE",
-      desc: "Summer internship with the EEE department at NIT. Certificate expected in the coming weeks.",
+      role: "Backend Developer Intern",
+      org: "NIT — Dept. of Computer Science & Engineering",
+      duration: "May - Jul 2026",
+      domain: "CSE",
+      desc: "Completed a Backend Development Internship at NIT Andhra Pradesh, focused on developing a Django-based curriculum management platform with role-based authorization, relational databases, and automated PDF report generation.",
+      link: "https://drive.google.com/file/d/1DCoq5nAOz6E8RkweE8lrmzL175xMkiGf/view?usp=sharing",
       status: "upcoming",
     },
   ];
