@@ -452,6 +452,9 @@ function Navbar() {
   );
 }
 
+const TOTAL_PROJECTS_COUNT = 15;
+const TOTAL_CERTS_COUNT = 9;
+
 // ─── SECTION 1: HERO ─────────────────────────────────────────────────────────
 function Hero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -522,7 +525,7 @@ function Hero() {
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.3 }}
             style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", flexWrap: "wrap" }}>
-            {[["8+", "Projects"], ["7", "Certifications"], ["2+", "Years Coding"]].map(([num, label]) => (
+            {[[`${TOTAL_PROJECTS_COUNT}`, "Projects"], [`${TOTAL_CERTS_COUNT}`, "Certifications"], ["2+", "Years Coding"]].map(([num, label]) => (
               <div key={label}>
                 <div style={{ fontSize: "clamp(22px, 2.5vw, 36px)", fontWeight: 800, color: "#DEDBC8", lineHeight: 1 }}>{num}</div>
                 <div style={{ fontSize: 11, color: "rgba(225,224,204,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4 }}>{label}</div>
@@ -657,7 +660,7 @@ function Skills() {
   const groups = [
     {
       label: "Languages",
-      pills: ["Python", "TypeScript"],
+      pills: ["Python", "TypeScript", "Java"],
       variant: "default",
     },
     {
@@ -667,7 +670,7 @@ function Skills() {
     },
     {
       label: "Backend",
-      pills: ["Node.js", "Django"],
+      pills: ["Node.js", "Express", "Django"],
       variant: "alt",
     },
     {
@@ -962,8 +965,28 @@ function AgentSystemViz() {
   );
 }
 
-// ─── LABSCAN SYSTEM VISUALIZATION ────────────────────────────────────────────
-function LabScanViz() {
+// ─── VISUALIZER COMMON TYPES ────────────────────────────────────────────────
+interface VizNode {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+  sublabel: string;
+  role: string;
+  color: string;
+  r: number;
+  core?: boolean;
+}
+
+interface VizEdge {
+  from: string;
+  to: string;
+  label: string;
+  phase: number;
+}
+
+// ─── ENGINEERING ATLAS SYSTEM VISUALIZATION ──────────────────────────────────
+function EngineeringAtlasViz() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -977,39 +1000,28 @@ function LabScanViz() {
 
   const W = 540, H = 320;
 
-  interface LSNode {
-    id: string; x: number; y: number; label: string; sublabel: string;
-    role: string; color: string; r: number; shape: "circle" | "rect";
-  }
-
-  const nodes: LSNode[] = [
-    { id: "faculty",  x: 60,  y: 80,  label: "Faculty",       sublabel: "Creator",     role: "Creates experiments & links ArUco markers to staged content", color: "rgba(222,219,200,0.6)", r: 16, shape: "circle" },
-    { id: "aruco",    x: 200, y: 80,  label: "ArUco Marker",  sublabel: "Physical QR", role: "Physical marker printed & placed in the lab — scanned by student", color: "#DEDBC8", r: 20, shape: "circle" },
-    { id: "student",  x: 60,  y: 220, label: "Student",       sublabel: "Scanner",     role: "Scans ArUco marker with device camera to unlock experiment", color: "rgba(222,219,200,0.6)", r: 16, shape: "circle" },
-    { id: "content",  x: 330, y: 150, label: "Staged Content", sublabel: "Theory→Video→Submit", role: "Sequential content unlocked per stage: Theory → Video → Submission form", color: "#DEDBC8", r: 22, shape: "circle" },
-    { id: "backend",  x: 200, y: 220, label: "Backend API",   sublabel: "Node + Express", role: "Handles auth, session state, ArUco resolution, file uploads via Cloudinary", color: "#DEDBC8", r: 18, shape: "circle" },
-    { id: "db",       x: 330, y: 290, label: "PostgreSQL",    sublabel: "Prisma ORM",  role: "Stores experiments, sessions, submissions and mark data", color: "rgba(222,219,200,0.5)", r: 14, shape: "circle" },
-    { id: "hod",      x: 470, y: 80,  label: "HOD",           sublabel: "Analytics",   role: "Tracks marks and performance across sections via dashboard", color: "rgba(222,219,200,0.6)", r: 16, shape: "circle" },
-    { id: "marks",    x: 470, y: 220, label: "Marks Dashboard", sublabel: "Real-time", role: "Live view of submissions, scores and section-level analytics", color: "#DEDBC8", r: 18, shape: "circle" },
+  const nodes: VizNode[] = [
+    { id: "curriculum", x: 60, y: 75, label: "Curriculum Graph", sublabel: "Branch / Sem", role: "Hierarchical academic structure: Branch → Year → Sem → Subject → Unit", color: "rgba(222,219,200,0.6)", r: 16 },
+    { id: "student", x: 60, y: 225, label: "Student & Faculty", sublabel: "Role Portals", role: "Role-based workflows with revision desk, question papers and assignments", color: "rgba(222,219,200,0.6)", r: 16 },
+    { id: "engine", x: 200, y: 150, label: "Atlas Engine", sublabel: "Next.js 14 API", role: "Core routing engine mapping curricula to visualizers and resource models", color: "#DEDBC8", r: 19, core: true },
+    { id: "visualizer", x: 340, y: 75, label: "Interactive Sim", sublabel: "Dynamic Visualizers", role: "Interactive simulation engines: OS Scheduler, Tree Visualizer, Packet Flow, Deadlock Graph", color: "#DEDBC8", r: 21, core: true },
+    { id: "resources", x: 340, y: 225, label: "Academic Vault", sublabel: "Notes & Papers", role: "Faculty-curated unit notes, PPTs, lab manuals, and previous year exam papers", color: "#DEDBC8", r: 18, core: true },
+    { id: "db", x: 475, y: 150, label: "Prisma ORM", sublabel: "PostgreSQL", role: "Normalized database storing institutions, syllabus versions, and analytics", color: "rgba(222,219,200,0.5)", r: 15 },
   ];
 
-  interface LSEdge { from: string; to: string; label: string; phase: number }
-  const edges: LSEdge[] = [
-    { from: "faculty",  to: "aruco",    label: "creates",  phase: 0 },
-    { from: "faculty",  to: "content",  label: "stages",   phase: 0.15 },
-    { from: "student",  to: "aruco",    label: "scans",    phase: 0.3 },
-    { from: "aruco",    to: "backend",  label: "resolves", phase: 0.45 },
-    { from: "backend",  to: "content",  label: "unlocks",  phase: 0.6 },
-    { from: "backend",  to: "db",       label: "persists", phase: 0.2 },
-    { from: "content",  to: "marks",    label: "submits",  phase: 0.75 },
-    { from: "marks",    to: "hod",      label: "reports",  phase: 0.1 },
-    { from: "db",       to: "marks",    label: "queries",  phase: 0.5 },
+  const edges: VizEdge[] = [
+    { from: "curriculum", to: "engine", label: "indexes", phase: 0 },
+    { from: "student", to: "engine", label: "navigates", phase: 0.15 },
+    { from: "engine", to: "visualizer", label: "mounts sim", phase: 0.3 },
+    { from: "engine", to: "resources", label: "delivers", phase: 0.45 },
+    { from: "visualizer", to: "db", label: "persists", phase: 0.6 },
+    { from: "resources", to: "db", label: "synchronizes", phase: 0.75 },
+    { from: "engine", to: "db", label: "queries", phase: 0.25 },
   ];
 
   const getNode = (id: string) => nodes.find(n => n.id === id);
 
-  interface FPProps { from: string; to: string; phase: number; idx: number }
-  const FlowParticle = ({ from, to, phase, idx }: FPProps) => {
+  const FlowParticle = ({ from, to, phase, idx }: { from: string; to: string; phase: number; idx: number }) => {
     const a = getNode(from); const b = getNode(to);
     if (!a || !b) return null;
     const t = ((tick / 100) + phase) % 1;
@@ -1019,18 +1031,15 @@ function LabScanViz() {
     return <circle key={idx} cx={px} cy={py} r={2} fill="#DEDBC8" opacity={(isHot ? 1 : 0.55) * Math.sin(t * Math.PI)} />;
   };
 
-  const handleHover = (id: string | null) => setHoveredNode(id);
-
   return (
     <div ref={containerRef} style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center" }}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
         style={{ position: "relative", maxWidth: W, width: "100%" }}
       >
         <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", overflow: "visible", cursor: "default" }}>
-          {/* Edges */}
           {edges.map((edge, i) => {
             const a = getNode(edge.from); const b = getNode(edge.to);
             if (!a || !b) return null;
@@ -1053,14 +1062,13 @@ function LabScanViz() {
             );
           })}
 
-          {/* Nodes */}
           {nodes.map(node => {
             const isHovered = hoveredNode === node.id;
-            const isCore = ["aruco", "content", "backend", "marks"].includes(node.id);
+            const isCore = !!node.core;
             return (
               <g key={node.id}
-                onMouseEnter={() => handleHover(node.id)}
-                onMouseLeave={() => handleHover(null)}
+                onMouseEnter={() => setHoveredNode(node.id)}
+                onMouseLeave={() => setHoveredNode(null)}
                 style={{ cursor: "pointer" }}>
                 {isHovered && (
                   <>
@@ -1098,8 +1106,7 @@ function LabScanViz() {
             );
           })}
 
-          {/* Role lanes — subtle background labels */}
-          {[["Faculty", 60, 18], ["Student", 60, 265], ["HOD", 470, 18]].map(([label, x, y]) => (
+          {[["Curriculum", 60, 18], ["Interactive Engine", 340, 18], ["Persistence", 475, 18]].map(([label, x, y]) => (
             <text key={label as string} x={x as number} y={y as number}
               textAnchor="middle" fill="rgba(222,219,200,0.12)"
               fontSize="8" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.14em"
@@ -1109,7 +1116,6 @@ function LabScanViz() {
           ))}
         </svg>
 
-        {/* Tooltip */}
         <AnimatePresence>
           {hoveredNode && (() => {
             const node = getNode(hoveredNode);
@@ -1128,7 +1134,6 @@ function LabScanViz() {
           })()}
         </AnimatePresence>
 
-        {/* Legend */}
         <div style={{ position: "absolute", bottom: -8, right: 0, display: "flex", gap: 16 }}>
           {[["Node", "rgba(222,219,200,0.35)"], ["Flow", "rgba(222,219,200,0.5)"]].map(([l, c]) => (
             <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -1141,6 +1146,331 @@ function LabScanViz() {
     </div>
   );
 }
+
+// ─── COLLABX SYSTEM VISUALIZATION ───────────────────────────────────────────
+function CollabXViz() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+  const inView = useInView(containerRef, { once: false, margin: "-10% 0px" });
+
+  useEffect(() => {
+    if (!inView) return;
+    const id = setInterval(() => setTick(t => (t + 1) % 100), 55);
+    return () => clearInterval(id);
+  }, [inView]);
+
+  const W = 540, H = 320;
+
+  const nodes: VizNode[] = [
+    { id: "citizen", x: 60, y: 75, label: "Citizen / Org", sublabel: "Post Problem", role: "Reports civic issues or triggers one-click emergency life-safety alerts", color: "rgba(222,219,200,0.6)", r: 16 },
+    { id: "solvers", x: 60, y: 225, label: "Matched Solvers", sublabel: "130+ Skills", role: "Students, volunteers, and orgs matched based on verified skill taxonomy", color: "rgba(222,219,200,0.6)", r: 16 },
+    { id: "api", x: 195, y: 150, label: "Express API", sublabel: "Auth & Gateways", role: "Validates reports, enforces rate limits, handles ID verification and audit trails", color: "#DEDBC8", r: 19, core: true },
+    { id: "rls_db", x: 335, y: 75, label: "Supabase DB", sublabel: "Row Level Security", role: "Database-level RLS policies strictly isolating chat rooms, posts, and user profiles", color: "#DEDBC8", r: 18, core: true },
+    { id: "realtime", x: 335, y: 225, label: "Realtime Engine", sublabel: "WebSockets", role: "Auto-spins dedicated chat rooms with live typing, unread badges, and notifications", color: "#DEDBC8", r: 21, core: true },
+    { id: "milestones", x: 470, y: 150, label: "Milestone Engine", sublabel: "0% → 100% Status", role: "Public transparency tracker: Challenge Logged → Matched → Progressing → Resolved", color: "rgba(222,219,200,0.5)", r: 16 },
+  ];
+
+  const edges: VizEdge[] = [
+    { from: "citizen", to: "api", label: "posts", phase: 0 },
+    { from: "solvers", to: "api", label: "accepts", phase: 0.15 },
+    { from: "api", to: "rls_db", label: "authorizes", phase: 0.3 },
+    { from: "api", to: "realtime", label: "broadcasts", phase: 0.45 },
+    { from: "realtime", to: "milestones", label: "live sync", phase: 0.6 },
+    { from: "rls_db", to: "milestones", label: "updates", phase: 0.75 },
+    { from: "api", to: "milestones", label: "tracks", phase: 0.2 },
+  ];
+
+  const getNode = (id: string) => nodes.find(n => n.id === id);
+
+  const FlowParticle = ({ from, to, phase, idx }: { from: string; to: string; phase: number; idx: number }) => {
+    const a = getNode(from); const b = getNode(to);
+    if (!a || !b) return null;
+    const t = ((tick / 100) + phase) % 1;
+    const px = a.x + (b.x - a.x) * t;
+    const py = a.y + (b.y - a.y) * t;
+    const isHot = hoveredNode === from || hoveredNode === to;
+    return <circle key={idx} cx={px} cy={py} r={2} fill="#DEDBC8" opacity={(isHot ? 1 : 0.55) * Math.sin(t * Math.PI)} />;
+  };
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center" }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+        style={{ position: "relative", maxWidth: W, width: "100%" }}
+      >
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", overflow: "visible", cursor: "default" }}>
+          {edges.map((edge, i) => {
+            const a = getNode(edge.from); const b = getNode(edge.to);
+            if (!a || !b) return null;
+            const isActive = hoveredNode === edge.from || hoveredNode === edge.to;
+            const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+            return (
+              <g key={i}>
+                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                  stroke={isActive ? "rgba(222,219,200,0.4)" : "rgba(222,219,200,0.1)"}
+                  strokeWidth={isActive ? 1.5 : 1} strokeDasharray="4 4"
+                  style={{ transition: "stroke 0.3s, stroke-width 0.3s" }} />
+                {isActive && (
+                  <text x={mx} y={my - 5} textAnchor="middle" fill="rgba(222,219,200,0.4)"
+                    fontSize="8" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.06em">
+                    {edge.label}
+                  </text>
+                )}
+                {inView && <FlowParticle from={edge.from} to={edge.to} phase={edge.phase} idx={i} />}
+              </g>
+            );
+          })}
+
+          {nodes.map(node => {
+            const isHovered = hoveredNode === node.id;
+            const isCore = !!node.core;
+            return (
+              <g key={node.id}
+                onMouseEnter={() => setHoveredNode(node.id)}
+                onMouseLeave={() => setHoveredNode(null)}
+                style={{ cursor: "pointer" }}>
+                {isHovered && (
+                  <>
+                    <circle cx={node.x} cy={node.y} r={node.r + 9} fill="none" stroke="rgba(222,219,200,0.12)" strokeWidth="1" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
+                    <circle cx={node.x} cy={node.y} r={node.r + 16} fill="none" stroke="rgba(222,219,200,0.05)" strokeWidth="1" style={{ animation: "pulse-ring 1.2s ease-out 0.4s infinite" }} />
+                  </>
+                )}
+                <circle cx={node.x} cy={node.y} r={node.r + 4} fill="none"
+                  stroke={isHovered ? "rgba(222,219,200,0.18)" : "rgba(222,219,200,0.05)"}
+                  strokeWidth="1" style={{ transition: "stroke 0.3s" }} />
+                <circle cx={node.x} cy={node.y} r={node.r}
+                  fill={isHovered ? "rgba(222,219,200,0.16)" : isCore ? "rgba(222,219,200,0.06)" : "rgba(222,219,200,0.03)"}
+                  stroke={isHovered ? "#DEDBC8" : isCore ? "rgba(222,219,200,0.3)" : "rgba(222,219,200,0.15)"}
+                  strokeWidth={isHovered ? 1.5 : 1}
+                  style={{ transition: "all 0.3s ease" }} />
+                <circle cx={node.x} cy={node.y} r={isCore ? 3.5 : 2}
+                  fill={isHovered ? "#fff" : "#DEDBC8"}
+                  opacity={isHovered ? 1 : 0.55}
+                  style={{ transition: "all 0.2s" }} />
+                <text x={node.x} y={node.y + node.r + 14}
+                  textAnchor="middle" fill={isHovered ? "#DEDBC8" : "rgba(222,219,200,0.35)"}
+                  fontSize="8.5" fontFamily="Almarai, sans-serif" fontWeight={isHovered ? "700" : "300"} letterSpacing="0.04em"
+                  style={{ transition: "fill 0.2s", userSelect: "none" }}>
+                  {node.label}
+                </text>
+                {isHovered && (
+                  <text x={node.x} y={node.y + node.r + 24}
+                    textAnchor="middle" fill="rgba(222,219,200,0.4)"
+                    fontSize="7.5" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.04em"
+                    style={{ userSelect: "none" }}>
+                    {node.sublabel}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {[["Civic Entry", 60, 18], ["Security & Realtime", 335, 18], ["Resolution", 470, 18]].map(([label, x, y]) => (
+            <text key={label as string} x={x as number} y={y as number}
+              textAnchor="middle" fill="rgba(222,219,200,0.12)"
+              fontSize="8" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.14em"
+              textDecoration="none" style={{ textTransform: "uppercase", userSelect: "none" }}>
+              {(label as string).toUpperCase()}
+            </text>
+          ))}
+        </svg>
+
+        <AnimatePresence>
+          {hoveredNode && (() => {
+            const node = getNode(hoveredNode);
+            if (!node) return null;
+            return (
+              <motion.div className="agent-tooltip"
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                transition={{ duration: 0.18 }}
+                style={{ left: Math.min(Math.max(node.x - 70, 0), W - 160), top: node.y - node.r - 72 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#DEDBC8", marginBottom: 4 }}>{node.label}</div>
+                <div style={{ fontSize: 11, color: "rgba(225,224,204,0.5)", lineHeight: 1.6, fontWeight: 300 }}>{node.role}</div>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>
+
+        <div style={{ position: "absolute", bottom: -8, right: 0, display: "flex", gap: 16 }}>
+          {[["Node", "rgba(222,219,200,0.35)"], ["Flow", "rgba(222,219,200,0.5)"]].map(([l, c]) => (
+            <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: c }} />
+              <span style={{ fontSize: 10, color: "rgba(222,219,200,0.3)", letterSpacing: "0.08em" }}>{l}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── SVEC SPORTS CLUB SYSTEM VISUALIZATION ────────────────────────────────────
+function SportsClubViz() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+  const inView = useInView(containerRef, { once: false, margin: "-10% 0px" });
+
+  useEffect(() => {
+    if (!inView) return;
+    const id = setInterval(() => setTick(t => (t + 1) % 100), 55);
+    return () => clearInterval(id);
+  }, [inView]);
+
+  const W = 540, H = 320;
+
+  const nodes: VizNode[] = [
+    { id: "athletes", x: 60, y: 75, label: "Athletes & Captains", sublabel: "Squad Builder", role: "Team creation, squad limits, jersey assignments, and verifiable digital ID cards", color: "rgba(222,219,200,0.6)", r: 16 },
+    { id: "ops", x: 60, y: 225, label: "Operations Cockpit", sublabel: "Admin Console", role: "Bracket scheduling, live score controls, press dispatches, and certificate issuance", color: "rgba(222,219,200,0.6)", r: 16 },
+    { id: "bracket", x: 200, y: 150, label: "Tournament Hub", sublabel: "Framer Bracket", role: "Multi-round single-elimination tournament bracket with animated qualification nodes", color: "#DEDBC8", r: 21, core: true },
+    { id: "matches", x: 340, y: 75, label: "Live Match Center", sublabel: "Score Console", role: "Period timers, goal scorers, live score updating, and status ribbons (LIVE/FINAL)", color: "#DEDBC8", r: 18, core: true },
+    { id: "qr_scanner", x: 340, y: 225, label: "QR Pass Scanner", sublabel: "Instant Check-In", role: "In-browser QR code scanner verifying digital athlete entry passes and match rosters", color: "#DEDBC8", r: 18, core: true },
+    { id: "campus_cup", x: 475, y: 150, label: "Campus Cup", sublabel: "Dynamic Podium", role: "Inter-department championship leaderboard with real-time gold/silver/bronze ranks", color: "rgba(222,219,200,0.5)", r: 16 },
+  ];
+
+  const edges: VizEdge[] = [
+    { from: "athletes", to: "bracket", label: "registers", phase: 0 },
+    { from: "ops", to: "bracket", label: "schedules", phase: 0.15 },
+    { from: "bracket", to: "matches", label: "advances", phase: 0.3 },
+    { from: "bracket", to: "qr_scanner", label: "issues pass", phase: 0.45 },
+    { from: "matches", to: "campus_cup", label: "awards pts", phase: 0.6 },
+    { from: "qr_scanner", to: "campus_cup", label: "verifies", phase: 0.75 },
+    { from: "ops", to: "matches", label: "controls", phase: 0.2 },
+  ];
+
+  const getNode = (id: string) => nodes.find(n => n.id === id);
+
+  const FlowParticle = ({ from, to, phase, idx }: { from: string; to: string; phase: number; idx: number }) => {
+    const a = getNode(from); const b = getNode(to);
+    if (!a || !b) return null;
+    const t = ((tick / 100) + phase) % 1;
+    const px = a.x + (b.x - a.x) * t;
+    const py = a.y + (b.y - a.y) * t;
+    const isHot = hoveredNode === from || hoveredNode === to;
+    return <circle key={idx} cx={px} cy={py} r={2} fill="#DEDBC8" opacity={(isHot ? 1 : 0.55) * Math.sin(t * Math.PI)} />;
+  };
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center" }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+        style={{ position: "relative", maxWidth: W, width: "100%" }}
+      >
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", overflow: "visible", cursor: "default" }}>
+          {edges.map((edge, i) => {
+            const a = getNode(edge.from); const b = getNode(edge.to);
+            if (!a || !b) return null;
+            const isActive = hoveredNode === edge.from || hoveredNode === edge.to;
+            const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+            return (
+              <g key={i}>
+                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                  stroke={isActive ? "rgba(222,219,200,0.4)" : "rgba(222,219,200,0.1)"}
+                  strokeWidth={isActive ? 1.5 : 1} strokeDasharray="4 4"
+                  style={{ transition: "stroke 0.3s, stroke-width 0.3s" }} />
+                {isActive && (
+                  <text x={mx} y={my - 5} textAnchor="middle" fill="rgba(222,219,200,0.4)"
+                    fontSize="8" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.06em">
+                    {edge.label}
+                  </text>
+                )}
+                {inView && <FlowParticle from={edge.from} to={edge.to} phase={edge.phase} idx={i} />}
+              </g>
+            );
+          })}
+
+          {nodes.map(node => {
+            const isHovered = hoveredNode === node.id;
+            const isCore = !!node.core;
+            return (
+              <g key={node.id}
+                onMouseEnter={() => setHoveredNode(node.id)}
+                onMouseLeave={() => setHoveredNode(null)}
+                style={{ cursor: "pointer" }}>
+                {isHovered && (
+                  <>
+                    <circle cx={node.x} cy={node.y} r={node.r + 9} fill="none" stroke="rgba(222,219,200,0.12)" strokeWidth="1" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
+                    <circle cx={node.x} cy={node.y} r={node.r + 16} fill="none" stroke="rgba(222,219,200,0.05)" strokeWidth="1" style={{ animation: "pulse-ring 1.2s ease-out 0.4s infinite" }} />
+                  </>
+                )}
+                <circle cx={node.x} cy={node.y} r={node.r + 4} fill="none"
+                  stroke={isHovered ? "rgba(222,219,200,0.18)" : "rgba(222,219,200,0.05)"}
+                  strokeWidth="1" style={{ transition: "stroke 0.3s" }} />
+                <circle cx={node.x} cy={node.y} r={node.r}
+                  fill={isHovered ? "rgba(222,219,200,0.16)" : isCore ? "rgba(222,219,200,0.06)" : "rgba(222,219,200,0.03)"}
+                  stroke={isHovered ? "#DEDBC8" : isCore ? "rgba(222,219,200,0.3)" : "rgba(222,219,200,0.15)"}
+                  strokeWidth={isHovered ? 1.5 : 1}
+                  style={{ transition: "all 0.3s ease" }} />
+                <circle cx={node.x} cy={node.y} r={isCore ? 3.5 : 2}
+                  fill={isHovered ? "#fff" : "#DEDBC8"}
+                  opacity={isHovered ? 1 : 0.55}
+                  style={{ transition: "all 0.2s" }} />
+                <text x={node.x} y={node.y + node.r + 14}
+                  textAnchor="middle" fill={isHovered ? "#DEDBC8" : "rgba(222,219,200,0.35)"}
+                  fontSize="8.5" fontFamily="Almarai, sans-serif" fontWeight={isHovered ? "700" : "300"} letterSpacing="0.04em"
+                  style={{ transition: "fill 0.2s", userSelect: "none" }}>
+                  {node.label}
+                </text>
+                {isHovered && (
+                  <text x={node.x} y={node.y + node.r + 24}
+                    textAnchor="middle" fill="rgba(222,219,200,0.4)"
+                    fontSize="7.5" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.04em"
+                    style={{ userSelect: "none" }}>
+                    {node.sublabel}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {[["Roster & Ops", 60, 18], ["Tournament Engines", 340, 18], ["Championship", 475, 18]].map(([label, x, y]) => (
+            <text key={label as string} x={x as number} y={y as number}
+              textAnchor="middle" fill="rgba(222,219,200,0.12)"
+              fontSize="8" fontFamily="Almarai, sans-serif" fontWeight="300" letterSpacing="0.14em"
+              textDecoration="none" style={{ textTransform: "uppercase", userSelect: "none" }}>
+              {(label as string).toUpperCase()}
+            </text>
+          ))}
+        </svg>
+
+        <AnimatePresence>
+          {hoveredNode && (() => {
+            const node = getNode(hoveredNode);
+            if (!node) return null;
+            return (
+              <motion.div className="agent-tooltip"
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                transition={{ duration: 0.18 }}
+                style={{ left: Math.min(Math.max(node.x - 70, 0), W - 160), top: node.y - node.r - 72 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#DEDBC8", marginBottom: 4 }}>{node.label}</div>
+                <div style={{ fontSize: 11, color: "rgba(225,224,204,0.5)", lineHeight: 1.6, fontWeight: 300 }}>{node.role}</div>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>
+
+        <div style={{ position: "absolute", bottom: -8, right: 0, display: "flex", gap: 16 }}>
+          {[["Node", "rgba(222,219,200,0.35)"], ["Flow", "rgba(222,219,200,0.5)"]].map(([l, c]) => (
+            <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: c }} />
+              <span style={{ fontSize: 10, color: "rgba(222,219,200,0.3)", letterSpacing: "0.08em" }}>{l}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 
 // ─── SECTION 3: PROJECTS (IMPROVED) ──────────────────────────────────────────
 interface ProjectDetail {
@@ -1226,10 +1556,323 @@ function ProjectDeepDive({ challenges, future }: { challenges?: string[]; future
   );
 }
 
+interface FeaturedProject {
+  num: string;
+  title: string;
+  subtitle: string;
+  desc: string;
+  problem: string;
+  tags: string[];
+  challenges: string[];
+  future: string[];
+  quote: string;
+  github: string;
+  live?: string;
+  vizTitle?: string;
+  viz: React.ReactNode;
+}
+
+function FeaturedProjectCard({ project, index }: { project: FeaturedProject; index: number }) {
+  return (
+    <FadeSection delay={index * 0.2}>
+      <TiltCard intensity={4} style={{ borderRadius: 16 }}>
+        <div className="autoresearch-grid featured-card-inner" style={{
+          background: "#141414", borderRadius: 16,
+          padding: "40px 40px 48px",
+          border: "1px solid rgba(222,219,200,0.15)",
+          display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 56, alignItems: "start"
+        }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "rgba(222,219,200,0.3)", fontWeight: 300, letterSpacing: "0.1em" }}>{project.num}</span>
+              <div style={{ display: "flex", gap: 12 }}>
+                <a href={project.github} target="_blank" rel="noopener noreferrer"
+                  style={{ color: "rgba(222,219,200,0.35)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.35)"; }}>
+                  <GithubIcon size={12} /> GitHub
+                </a>
+                {project.live && (
+                  <a href={project.live} target="_blank" rel="noopener noreferrer"
+                    style={{ color: "rgba(222,219,200,0.35)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.35)"; }}>
+                    <ExternalLink size={12} /> Live
+                  </a>
+                )}
+              </div>
+            </div>
+            <div>
+              <h3 style={{ fontSize: "clamp(22px, 2.8vw, 36px)", fontWeight: 800, color: "#E1E0CC", marginBottom: 6, lineHeight: 1.15 }}>{project.title}</h3>
+              <p style={{ fontSize: 12, color: "rgba(222,219,200,0.4)", fontWeight: 300, letterSpacing: "0.02em" }}>{project.subtitle}</p>
+            </div>
+            <p style={{ fontSize: 13, color: "rgba(225,224,204,0.5)", lineHeight: 1.8, fontWeight: 300 }}>
+              {project.desc}
+            </p>
+
+            {/* Problem statement */}
+            <div style={{ padding: "14px 16px", background: "rgba(222,219,200,0.03)", borderLeft: "2px solid rgba(222,219,200,0.25)", borderRadius: "0 6px 6px 0" }}>
+              <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(222,219,200,0.35)", marginBottom: 6, fontWeight: 300 }}>Problem</div>
+              <p style={{ fontSize: 12.5, color: "rgba(225,224,204,0.55)", lineHeight: 1.7, fontWeight: 300 }}>
+                {project.problem}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {project.tags.map(tag => (
+                <span key={tag} className="tag">{tag}</span>
+              ))}
+            </div>
+
+            <ProjectDeepDive
+              challenges={project.challenges}
+              future={project.future}
+            />
+
+            <div style={{ paddingTop: 16, borderTop: "1px solid rgba(222,219,200,0.07)" }}>
+              <p style={{ fontSize: 12, color: "#DEDBC8", lineHeight: 1.65, fontFamily: "Instrument Serif, serif", fontStyle: "italic" }}>
+                {project.quote}
+              </p>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(222,219,200,0.2)", fontWeight: 300, marginBottom: 6 }}>
+              {project.vizTitle || "System Architecture · Hover to Explore"}
+            </div>
+            {project.viz}
+          </div>
+        </div>
+      </TiltCard>
+    </FadeSection>
+  );
+}
+
 function Projects() {
+  const featuredProjects: FeaturedProject[] = [
+    {
+      num: "01",
+      title: "Engineering Atlas",
+      subtitle: "Interactive Academic & Visual Learning Platform",
+      desc: "An interactive academic companion and visual learning platform built for B.Tech engineering students. Organizes complex curricula across multiple engineering branches, academic years, semesters, and subjects into structured visual topic guides, interactive simulation engines, and faculty-managed course materials.",
+      problem: "Engineering students often struggle with abstract theoretical concepts that lack dynamic visual representation, while faculty manage dispersed course notes, assignments, and question papers without a unified academic workflow. Engineering Atlas bridges textbook theory and intuitive mental models through interactive visualizers and a role-based academic structure.",
+      tags: [
+        "Interactive Academic Learning",
+        "Branch / Semester Navigation",
+        "Dynamic Simulations",
+        "Prisma + PostgreSQL",
+        "Role-Based Workflows",
+        "Next.js 14"
+      ],
+      challenges: [
+        "Developing modular interactive simulation engines for CS domains (OS scheduling, packet routing, tree traversal) with deterministic state visualization.",
+        "Designing a normalized relational schema connecting institutions, branches, academic regulations, semesters, and curriculum units.",
+        "Implementing role-based content staging (Draft → Review → Published) for faculty submissions and student revision desks.",
+      ],
+      future: [
+        "AI concept explanation assistant",
+        "Interactive quiz engine",
+        "WebAssembly simulation kernels",
+        "Mobile companion app",
+        "Collaborative whiteboard"
+      ],
+      quote: "Transforms static engineering textbooks into interactive visual simulations and structured academic roadmaps.",
+      github: "https://github.com/deva-harsha-v/engineeringatlas",
+      vizTitle: "System Architecture · Hover to Explore",
+      viz: <EngineeringAtlasViz />,
+    },
+    {
+      num: "02",
+      title: "CollabX",
+      subtitle: "Civic Collaboration & Real-Time Resolution Platform",
+      desc: "A full-stack civic collaboration platform built for Smart India Hackathon (SIH26043) that converts static complaints into live, verified community challenges. Connects citizens, student problem-solvers, and municipal organizations through skill-matched routing, real-time WebSocket messaging, milestone progress tracking (0–100%), and emergency fast-tracking.",
+      problem: "Traditional civic issue reporting portals are passive drop-boxes where complaints sit unmonitored without public visibility, skill-matched solvers, or real-time communication channels between citizens and authorities. CollabX converts complaints into actionable community challenges with transparent resolution milestones.",
+      tags: [
+        "React 19 + Vite",
+        "Node.js / Express",
+        "Supabase (PostgreSQL)",
+        "Row-Level Security",
+        "WebSockets Realtime",
+        "Live Deployed"
+      ],
+      challenges: [
+        "Architecting database-level Row Level Security (RLS) in Supabase to enforce multi-tenant authorization without leaking private messages.",
+        "Designing sub-100ms real-time chat room orchestration over Supabase WebSockets with automatic room provisioning on challenge acceptance.",
+        "Balancing emergency reporting speed with anti-abuse validation and multi-role access control.",
+      ],
+      future: [
+        "Geographic GIS heatmaps",
+        "Mobile push notifications",
+        "AI duplicate challenge detector",
+        "Government API integrations",
+        "Reputation & bounty tokens"
+      ],
+      quote: "Converts passive civic complaints into transparent, milestone-driven challenges resolved collaboratively in real time.",
+      github: "https://github.com/deva-harsha-v/CollabX",
+      live: "https://collabx-sves.vercel.app",
+      vizTitle: "System Architecture · Hover to Explore",
+      viz: <CollabXViz />,
+    },
+    {
+      num: "03",
+      title: "SVEC Sports Club",
+      subtitle: "Collegiate Athletic & Tournament Operations Platform",
+      desc: "A high-performance collegiate sports and tournament management platform inspired by ESPN and UEFA tournament broadcast hubs. Features an interactive varsity sports directory, live match center with score consoles, multi-round single-elimination tournament bracket engine with Framer Motion animations, digital athlete IDs, QR attendance passes, and inter-department Campus Cup leaderboards.",
+      problem: "College sports tournaments suffer from fragmented schedules, paper score sheets, manual squad registration errors, and disconnected spectator updates. SVEC Sports Club digitizes the entire athletic ecosystem into a centralized broadcast hub with real-time bracket advancement and verifiable digital athlete credentials.",
+      tags: [
+        "React 19",
+        "Tailwind CSS",
+        "Framer Motion",
+        "Supabase (PostgreSQL)",
+        "Tournament Brackets",
+        "QR Code Scanner",
+        "Live Deployed"
+      ],
+      challenges: [
+        "Developing an interactive single-elimination bracket engine with dynamic node advancement and qualification transitions.",
+        "Implementing browser-based QR code pass scanning and instant verification against athlete tournament rosters.",
+        "Architecting real-time score updates and automated Campus Cup point redistribution across departments.",
+      ],
+      future: [
+        "Live video streaming embed",
+        "Inter-college league fixtures",
+        "Automated referee assignment",
+        "NFC wristband integration",
+        "Athletic injury tracking"
+      ],
+      quote: "Brings ESPN-style broadcast energy, interactive brackets, and verifiable digital athlete credentials to collegiate athletics.",
+      github: "https://github.com/deva-harsha-v/svec-sports-club",
+      live: "https://svecsportsclub.vercel.app",
+      vizTitle: "System Architecture · Hover to Explore",
+      viz: <SportsClubViz />,
+    },
+    {
+      num: "04",
+      title: "AutoResearch",
+      subtitle: "Multi-Agent AI Research System",
+      desc: "Built a multi-agent AI system that automates research workflows by handling search, summarization, and fact-checking through specialized agents — deployed as a live web application.",
+      problem: "A single LLM call often produces hallucinated or poorly-referenced answers. AutoResearch splits the work across specialized agents that validate information before the final report is generated.",
+      tags: [
+        "Multi-agent architecture",
+        "Confidence scoring",
+        "Gemini API",
+        "Python + Flask",
+        "Live deployed"
+      ],
+      challenges: [
+        "Designing an agent orchestration pipeline for autonomous task execution.",
+        "Building confidence scoring to estimate response reliability.",
+        "Keeping agent-to-agent communication modular and easy to extend.",
+      ],
+      future: [
+        "Parallel agent execution",
+        "Research memory",
+        "Academic paper search",
+        "PDF export",
+        "Human-in-the-loop verification"
+      ],
+      quote: "Focuses on multi-step reasoning and validation — not just AI responses.",
+      github: "https://github.com/deva-harsha-v/AutoResearch-MultiAgent",
+      live: "https://autoresearch-multiagent.netlify.app/",
+      vizTitle: "System Architecture · Hover to Explore",
+      viz: <AgentSystemViz />,
+    },
+  ];
+
   const others: ProjectDetail[] = [
     {
-      num: "03", title: "DocuChat", subtitle: "Offline RAG Knowledge Assistant",
+      num: "05",
+      title: "LabScan",
+      subtitle: "Laboratory Experiment Management Platform",
+      desc: "Full-stack lab management platform developed at NIT Andhra Pradesh (CRTDH) — faculty create ArUco-linked experiments and sessions, students scan physical markers to access staged content (theory → video → submit), and HODs track marks across sections.",
+      problem: "Traditional lab sessions run on printed manuals and physical record books — students lose access to material outside the lab, and faculty spend hours on manual submissions and attendance.",
+      challenges: [
+        "Synchronizing physical ArUco markers with dynamic experiment data.",
+        "Designing DB relationships across faculty, labs, experiments, and submissions.",
+        "Maintaining a scalable authorization system across multiple academic roles.",
+      ],
+      future: [
+        "QR fallback",
+        "Attendance tracking",
+        "Analytics dashboard",
+        "AI lab assistant",
+        "Offline sync"
+      ],
+      tags: [
+        "ArUco markers",
+        "Role-based auth",
+        "Socket.IO",
+        "Cloudinary",
+        "Prisma + PostgreSQL",
+        "Live deployed"
+      ],
+      github: "https://github.com/deva-harsha-v/lab-scan",
+      live: "https://lab-scan.vercel.app",
+    },
+    {
+      num: "06",
+      title: "Hotel Reservation System",
+      subtitle: "Object-Oriented Java Reservation Engine",
+      desc: "A production-structured Java hotel reservation and billing management system built with robust Object-Oriented Design principles and design patterns. Implements room inventory management, multi-role access (Guest, Receptionist, Admin), dynamic reservation booking with overlapping-date validation, promotion codes, and file-based data persistence.",
+      problem: "Hotel booking workflows require strict enforcement of business rules — preventing double bookings, applying seasonal promo discounts, calculating late checkout penalties, and managing invoice lifecycles without coupling core domain models to storage or UI.",
+      challenges: [
+        "Implementing the Builder pattern for Reservation and Invoice models to handle complex multi-step booking configurations cleanly.",
+        "Applying the Strategy pattern to decouple cash and card payment processing from billing logic.",
+        "Preventing double-booking collisions through date-range overlap validation algorithms in room availability checks.",
+        "Structuring modular unit test suites across models, services, and factory patterns using JUnit."
+      ],
+      future: [
+        "Spring Boot REST API",
+        "React/Next.js frontend",
+        "PostgreSQL database migration",
+        "Email confirmation notifications",
+        "Stripe payment integration"
+      ],
+      tags: [
+        "Java",
+        "OOP Architecture",
+        "Factory Pattern",
+        "Strategy Pattern",
+        "Observer Pattern",
+        "Builder Pattern",
+        "JUnit"
+      ],
+      github: "https://github.com/deva-harsha-v/Hotel-Reservation-System",
+      live: "",
+    },
+    {
+      num: "07",
+      title: "DigiHealth ID",
+      subtitle: "Digital Health Card & Member Profile System",
+      desc: "A Digital Health Card & Member Profile Management System — a vanilla JS multi-page web application for digital member enrollment, vaccination history tracking, demographic analytics, and instant printable/downloadable digital health ID cards with client-side persistence.",
+      problem: "Manual health record and vaccination tracking is error-prone, hard to access on demand, and vulnerable to loss. DigiHealth ID digitizes member enrollment, health tracking, and ID generation into one lightweight, dependency-free web app.",
+      challenges: [
+        "Building a multi-step member registration and vaccination tracking pipeline using modular ES6 without external frameworks.",
+        "Using HTML5 Canvas API to generate printable and downloadable high-resolution digital health ID cards.",
+        "Managing normalized client-side database schemas and relational lookups across members, vaccinations, and caretaker commissions entirely within LocalStorage."
+      ],
+      future: [
+        "Backend database integration (replace localStorage)",
+        "QR code verification for health cards",
+        "Multi-admin role support",
+        "Vaccination reminder notifications",
+        "Data export/reporting enhancements",
+        "Cloud sync across devices"
+      ],
+      tags: [
+        "JavaScript",
+        "HTML/CSS",
+        "LocalStorage",
+        "Canvas API",
+        "Vanilla JS",
+        "Live deployed"
+      ],
+      github: "https://github.com/deva-harsha-v/health-card-system",
+      live: "https://digihealthid.netlify.app",
+    },
+    {
+      num: "08",
+      title: "DocuChat",
+      subtitle: "Offline RAG Knowledge Assistant",
       desc: "Local-first RAG pipeline to chat with your PDFs — hybrid vector + keyword search (BM25), page-level source attribution, and streaming answers via Ollama. No API keys, fully offline.",
       problem: "Most AI document assistants require internet access and send confidential files to third-party APIs — a privacy and cost problem. DocuChat runs the entire retrieval + generation pipeline locally.",
       challenges: [
@@ -1243,7 +1886,9 @@ function Projects() {
       live: "https://github.com/deva-harsha-v/DocuChat",
     },
     {
-      num: "04", title: "Smart Canteen", subtitle: "Full-Stack Ordering Platform",
+      num: "09",
+      title: "Smart Canteen",
+      subtitle: "Full-Stack Ordering Platform",
       desc: "Developed a full-stack food ordering system with real-time order tracking and role-based authentication.",
       problem: "College canteens rely on manual ordering, which leads to long queues, delayed service, and poor order management. Smart Canteen digitizes the workflow end to end.",
       future: ["Online payments", "Push notifications", "Vendor analytics dashboard", "Recommendation engine", "Inventory prediction"],
@@ -1252,7 +1897,9 @@ function Projects() {
       live: "https://smart-canteen-sigma.vercel.app/",
     },
     {
-      num: "05", title: "Auth System", subtitle: "MFA & Google OAuth",
+      num: "10",
+      title: "Auth System",
+      subtitle: "MFA & Google OAuth",
       desc: "A Next.js 15+ authentication platform featuring Multi-Method Login (Google SSO & Local OTP), MFA, and Open-Source IAS integration with middleware-based route protection.",
       problem: "Most auth systems only support a single login method, which doesn't hold up for enterprise apps that need multiple authentication strategies. This platform is built as a modular, multi-provider system.",
       future: ["Passkey authentication (WebAuthn)", "SAML support", "OAuth provider expansion", "Device management", "Audit logging", "Single Logout (SLO)"],
@@ -1261,7 +1908,7 @@ function Projects() {
       live: "https://authentication-system-xhaw.vercel.app/",
     },
     {
-      num: "06",
+      num: "11",
       title: "Design Stamp",
       subtitle: "Desktop Logo Generator",
       desc: "A Python desktop application for generating customizable stamp-style logos with real-time preview, allowing users to create personalized logos through an intuitive graphical interface without external design software.",
@@ -1284,7 +1931,7 @@ function Projects() {
       live: "https://design-stamp-logo-generator.onrender.com/",
     },
     {
-      num: "07",
+      num: "12",
       title: "EduPredict",
       subtitle: "Student Performance Intelligence System",
       desc: "A full-stack academic analytics platform that predicts student performance using SGPA, CGPA, attendance, and engagement metrics while providing role-based dashboards for students, faculty, and administrators.",
@@ -1307,7 +1954,7 @@ function Projects() {
       live: "https://edu-predict-alpha.vercel.app/",
     },
     {
-      num: "08",
+      num: "13",
       title: "Bolisetti Blue Waves",
       subtitle: "Full-Stack Pool Management Platform",
       desc: "A modern pool management platform that streamlines online bookings, membership management, and administrative operations with dynamic slot availability and a responsive management dashboard.",
@@ -1330,7 +1977,7 @@ function Projects() {
       live: "https://bolisetti-blue-waves.vercel.app",
     },
     {
-      num: "09",
+      num: "14",
       title: "Curriculum Management System",
       subtitle: "Role-Based Academic Platform",
       desc: "A role-based Curriculum Management System built with Django for managing academic curricula, course outcomes (COs), program outcomes (POs), graduate attributes, departments, and version-controlled curriculum workflows.",
@@ -1353,7 +2000,7 @@ function Projects() {
       live: "",
     },
     {
-      num: "10",
+      num: "15",
       title: "Library Management System",
       subtitle: "Full-Stack Book & Member Platform",
       desc: "A production-ready full-stack Library Management System built with React.js, Spring Boot, PostgreSQL, and JWT Authentication featuring secure role-based access, book/member management, issue-return workflows, overdue tracking, and RESTful API integration.",
@@ -1377,29 +2024,6 @@ function Projects() {
       github: "https://github.com/deva-harsha-v/library-management-system",
       live: "https://library-management-system-blush-one.vercel.app",
     },
-    {
-      num: "11",
-      title: "DigiHealth ID",
-      subtitle: "Digital Health Card & Member Profile System",
-      desc: "A Digital Health Card & Member Profile Management System — a vanilla JS multi-page app for enrolling members, tracking vaccinations, and generating printable digital health ID cards.",
-      problem: "Manual health record and vaccination tracking is error-prone and hard to access on demand. DigiHealth ID digitizes member enrollment, health tracking, and ID generation into one lightweight, dependency-free web app.",
-      future: [
-        "Backend database integration (replace localStorage)",
-        "QR code verification for health cards",
-        "Multi-admin role support",
-        "Vaccination reminder notifications",
-        "Data export/reporting enhancements",
-        "Cloud sync across devices"
-      ],
-      tags: [
-        "JavaScript",
-        "HTML/CSS",
-        "LocalStorage",
-        "Vanilla JS"
-      ],
-      github: "https://github.com/deva-harsha-v/health-card-system",
-      live: "https://digihealthid.netlify.app",
-    },
   ];
 
   return (
@@ -1412,156 +2036,10 @@ function Projects() {
 
         {/* Featured cards wrapper — stacked with 32px gap */}
         <div style={{ display: "flex", flexDirection: "column", gap: 32, marginBottom: 32 }}>
-
-          {/* LabScan — featured #1 */}
-          <FadeSection delay={2}>
-            <TiltCard intensity={4} style={{ borderRadius: 16 }}>
-              <div className="autoresearch-grid featured-card-inner" style={{
-                background: "#141414", borderRadius: 16,
-                padding: "40px 40px 48px",
-                border: "1px solid rgba(222,219,200,0.15)",
-                display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 56, alignItems: "start"
-              }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 11, color: "rgba(222,219,200,0.3)", fontWeight: 300, letterSpacing: "0.1em" }}>01</span>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <a href="https://github.com/deva-harsha-v/lab-scan" target="_blank" rel="noopener noreferrer"
-                        style={{ color: "rgba(222,219,200,0.35)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.35)"; }}>
-                        <GithubIcon size={12} /> GitHub
-                      </a>
-                      <a href="https://lab-scan.vercel.app" target="_blank" rel="noopener noreferrer"
-                        style={{ color: "rgba(222,219,200,0.35)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.35)"; }}>
-                        <ExternalLink size={12} /> Live
-                      </a>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: "clamp(22px, 2.8vw, 36px)", fontWeight: 800, color: "#E1E0CC", marginBottom: 6, lineHeight: 1.15 }}>LabScan</h3>
-                    <p style={{ fontSize: 12, color: "rgba(222,219,200,0.4)", fontWeight: 300, letterSpacing: "0.02em" }}>Laboratory Experiment Management Platform</p>
-                  </div>
-                  <p style={{ fontSize: 13, color: "rgba(225,224,204,0.5)", lineHeight: 1.8, fontWeight: 300 }}>
-                    Full-stack lab management platform for colleges — faculty create ArUco-linked experiments and sessions, students scan physical markers to access staged content (theory → video → submit), and HODs track marks across sections.
-                  </p>
-
-                  {/* Problem statement */}
-                  <div style={{ padding: "14px 16px", background: "rgba(222,219,200,0.03)", borderLeft: "2px solid rgba(222,219,200,0.25)", borderRadius: "0 6px 6px 0" }}>
-                    <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(222,219,200,0.35)", marginBottom: 6, fontWeight: 300 }}>Problem</div>
-                    <p style={{ fontSize: 12.5, color: "rgba(225,224,204,0.55)", lineHeight: 1.7, fontWeight: 300 }}>
-                      Traditional lab sessions run on printed manuals and physical record books — students lose access to material outside the lab, and faculty spend hours on manual submissions and attendance.
-                    </p>
-                  </div>
-
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {["ArUco markers", "Role-based auth", "Socket.IO", "Cloudinary", "Prisma + PostgreSQL", "Live deployed"].map(tag => (
-                      <span key={tag} className="tag">{tag}</span>
-                    ))}
-                  </div>
-
-                  <ProjectDeepDive
-                    challenges={[
-                      "Synchronizing physical ArUco markers with dynamic experiment data.",
-                      "Designing DB relationships across faculty, labs, experiments, and submissions.",
-                      "Maintaining a scalable authorization system across multiple academic roles.",
-                    ]}
-                    future={["QR fallback", "Attendance tracking", "Analytics dashboard", "AI lab assistant", "Offline sync"]}
-                  />
-
-                  <div style={{ paddingTop: 16, borderTop: "1px solid rgba(222,219,200,0.07)" }}>
-                    <p style={{ fontSize: 12, color: "#DEDBC8", lineHeight: 1.65, fontFamily: "Instrument Serif, serif", fontStyle: "italic" }}>
-                      Bridges physical lab infrastructure with digital workflows — scan a marker, unlock your experiment.
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(222,219,200,0.2)", fontWeight: 300, marginBottom: 6 }}>
-                    System Architecture · Hover to Explore
-                  </div>
-                  <LabScanViz />
-                </div>
-              </div>
-            </TiltCard>
-          </FadeSection>
-
-          {/* AutoResearch — featured #2 */}
-          <FadeSection delay={2}>
-            <TiltCard intensity={4} style={{ borderRadius: 16 }}>
-              <div className="autoresearch-grid featured-card-inner" style={{
-                background: "#141414", borderRadius: 16,
-                padding: "40px 40px 48px",
-                border: "1px solid rgba(222,219,200,0.15)",
-                display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 56, alignItems: "start"
-              }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 11, color: "rgba(222,219,200,0.3)", fontWeight: 300, letterSpacing: "0.1em" }}>02</span>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <a href="https://github.com/deva-harsha-v/AutoResearch-MultiAgent" target="_blank" rel="noopener noreferrer"
-                        style={{ color: "rgba(222,219,200,0.35)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.35)"; }}>
-                        <GithubIcon size={12} /> GitHub
-                      </a>
-                      <a href="https://autoresearch-multiagent.netlify.app/" target="_blank" rel="noopener noreferrer"
-                        style={{ color: "rgba(222,219,200,0.35)", textDecoration: "none", fontSize: 11, fontWeight: 300, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#DEDBC8"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(222,219,200,0.35)"; }}>
-                        <ExternalLink size={12} /> Live
-                      </a>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: "clamp(22px, 2.8vw, 36px)", fontWeight: 800, color: "#E1E0CC", marginBottom: 6, lineHeight: 1.15 }}>AutoResearch</h3>
-                    <p style={{ fontSize: 12, color: "rgba(222,219,200,0.4)", fontWeight: 300, letterSpacing: "0.02em" }}>Multi-Agent AI Research System</p>
-                  </div>
-                  <p style={{ fontSize: 13, color: "rgba(225,224,204,0.5)", lineHeight: 1.8, fontWeight: 300 }}>
-                    Built a multi-agent AI system that automates research workflows by handling search, summarization, and fact-checking through specialized agents — deployed as a live web application.
-                  </p>
-
-                  {/* Problem statement */}
-                  <div style={{ padding: "14px 16px", background: "rgba(222,219,200,0.03)", borderLeft: "2px solid rgba(222,219,200,0.25)", borderRadius: "0 6px 6px 0" }}>
-                    <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(222,219,200,0.35)", marginBottom: 6, fontWeight: 300 }}>Problem</div>
-                    <p style={{ fontSize: 12.5, color: "rgba(225,224,204,0.55)", lineHeight: 1.7, fontWeight: 300 }}>
-                      A single LLM call often produces hallucinated or poorly-referenced answers. AutoResearch splits the work across specialized agents that validate information before the final report is generated.
-                    </p>
-                  </div>
-
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {["Multi-agent architecture", "Confidence scoring", "Gemini API", "Live deployed"].map(tag => (
-                      <span key={tag} className="tag">{tag}</span>
-                    ))}
-                  </div>
-
-                  <ProjectDeepDive
-                    challenges={[
-                      "Designing an agent orchestration pipeline for autonomous task execution.",
-                      "Building confidence scoring to estimate response reliability.",
-                      "Keeping agent-to-agent communication modular and easy to extend.",
-                    ]}
-                    future={["Parallel agent execution", "Research memory", "Academic paper search", "PDF export", "Human-in-the-loop verification"]}
-                  />
-
-                  <div style={{ paddingTop: 16, borderTop: "1px solid rgba(222,219,200,0.07)" }}>
-                    <p style={{ fontSize: 12, color: "#DEDBC8", lineHeight: 1.65, fontFamily: "Instrument Serif, serif", fontStyle: "italic" }}>
-                      Focuses on multi-step reasoning and validation — not just AI responses.
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(222,219,200,0.2)", fontWeight: 300, marginBottom: 6 }}>
-                    System Architecture · Hover to Explore
-                  </div>
-                  <AgentSystemViz />
-                </div>
-              </div>
-            </TiltCard>
-          </FadeSection>
-
-        </div>{/* end featured wrapper */}
+          {featuredProjects.map((p, i) => (
+            <FeaturedProjectCard key={p.num} project={p} index={i} />
+          ))}
+        </div>
 
         {/* Divider before others grid */}
         <div style={{ height: 1, background: "rgba(222,219,200,0.06)", marginBottom: 32 }} />
@@ -1668,6 +2146,24 @@ interface Internship {
 function Internships() {
   const internships: Internship[] = [
     {
+      role: "Full Stack Developer Intern",
+      org: "NIT — Dept. of Electrical & Electronics Engineering",
+      duration: "May – Jun 2026",
+      domain: "EEE",
+      desc: "Engineered a full-stack laboratory management platform (LabScan) at NIT Andhra Pradesh enabling faculty to manage experiments and students to access staged learning via AR.js marker recognition, built with REST APIs, JWT authentication, and PostgreSQL.",
+      link: "https://drive.google.com/file/d/1DCoq5nAOz6E8RkweE8lrmzL175xMkiGf/view?usp=sharing",
+      status: "completed",
+    },
+    {
+      role: "Full Stack Development Intern",
+      org: "NIT — Dept. of Computer Science & Engineering",
+      duration: "May – Jul 2026",
+      domain: "CSE",
+      desc: "Engineered a role-based Curriculum Management Platform using Django for Administrators, HODs, and Faculty members at NIT Andhra Pradesh, featuring normalized relational database models, role-based authorization, and automated PDF report generation.",
+      link: "https://drive.google.com/file/d/1DCoq5nAOz6E8RkweE8lrmzL175xMkiGf/view?usp=sharing",
+      status: "completed",
+    },
+    {
       role: "Web Development Intern",
       org: "ExcelR EdTech Pvt. Ltd.",
       duration: "May – Jun 2026",
@@ -1675,24 +2171,6 @@ function Internships() {
       desc: "Completed a short-term internship on Web Development / JavaScript, organized by ExcelR EdTech in collaboration with the Andhra Pradesh State Council of Higher Education (APSCHE).",
       link: "https://drive.google.com/file/d/1_07lYj5mDAgnsdDnkLSJ7GdUVRjAH0QT/view?usp=sharing",
       status: "completed",
-    },
-    {
-      role: "Full Stack Developer Intern",
-      org: "NIT — Dept. of Electrical & Electronics Engineering",
-      duration: "May - Jun 2026",
-      domain: "EEE",
-      desc: "Completed a Full Stack Developer Internship at NIT Andhra Pradesh, focused on developing a laboratory management platform with secure REST APIs, JWT authentication, role-based access control, and PostgreSQL.",
-      link: "https://drive.google.com/file/d/1DCoq5nAOz6E8RkweE8lrmzL175xMkiGf/view?usp=sharing",
-      status: "completed",
-    },
-    {
-      role: "Backend Developer Intern",
-      org: "NIT — Dept. of Computer Science & Engineering",
-      duration: "May - Jul 2026",
-      domain: "CSE",
-      desc: "Completed a Backend Development Internship at NIT Andhra Pradesh, focused on developing a Django-based curriculum management platform with role-based authorization, relational databases, and automated PDF report generation.",
-      link: "https://drive.google.com/file/d/1DCoq5nAOz6E8RkweE8lrmzL175xMkiGf/view?usp=sharing",
-      status: "upcoming",
     },
   ];
 
@@ -1767,15 +2245,17 @@ function Internships() {
 function Certifications() {
   const certs = [
     { title: "ServiceNow Certified System Administrator (CSA)", issuer: "ServiceNow", context: "IT service management, platform administration, and workflow automation on ServiceNow", link: "https://drive.google.com/file/d/1WEHhVVenCXpiAC6xEzwTE1VuBln_AqBx/view?usp=drive_link" },
+    { title: "ServiceNow Certified Application Developer (CAD)", issuer: "ServiceNow", context: "Designing, configuring, and extending custom business applications and automated workflows on ServiceNow", link: "https://drive.google.com/file/d/1-2ihvIxDorssfDgUfMUholDZqoLX1Vii/view?usp=drivesdk" },
     { title: "Anthropic Claude Code 101", issuer: "Anthropic", context: "Agentic AI coding workflows using Claude — prompting, tool use, and AI-assisted development", link: "https://drive.google.com/file/d/1fUGmqXgAOABaZFxMyiPweJoUW5MKC-TK/view?usp=drive_link" },
     { title: "Oracle Cloud Infrastructure 2025 — Generative AI Professional", issuer: "Oracle",                       context: "Generative AI concepts on OCI, including LLM deployment and prompt engineering",         link: "https://drive.google.com/file/d/1qia5AoUM-pv4qo5EA0dQSA6vbplE2tFX/view?usp=drive_link" },
     { title: "Oracle Cloud Infrastructure 2025 — Data Science Professional",  issuer: "Oracle",                       context: "End-to-end ML workflows, model training and deployment on Oracle Cloud",                  link: "https://drive.google.com/file/d/16ZGyz2jxNro18AMPcClBQ22DvL-zEibz/view?usp=drive_link" },
     { title: "Salesforce Certified Agentforce Specialist",                     issuer: "Salesforce",                   context: "Building and deploying AI agents using the Salesforce Agentforce platform",               link: "https://drive.google.com/file/d/17B8oytLYP3DTz8k4NRjKkasY3MyyqBGK/view?usp=drive_link" },
     { title: "NPTEL Elite — Entrepreneurship (71%)",                           issuer: "IIT Madras · Jul–Oct 2025",    context: "Business models, startup strategy and entrepreneurial thinking",                         link: "https://drive.google.com/file/d/1OskXqM7rZCD0cNIrMtn7V0LkzkkHzXS0/view?usp=drive_link" },
     { title: "NPTEL Elite — Introduction to Internet of Things (67%)",         issuer: "IIT Kharagpur · Jan–Apr 2025", context: "IoT architecture, sensors, embedded systems and communication protocols",                link: "https://drive.google.com/file/d/1_iVlgNEslW16wP4gYH5yLlVrXYXSKrKI/view?usp=drive_link" },
+    { title: "MATLAB Onramp",                                                  issuer: "MathWorks · May 2026",         context: "Interactive course covering MATLAB essentials, data analysis, and mathematical computing workflows", link: "" },
   ];
   return (
-    <section style={{ padding: "10vh 5vw", background: "#0A0A0A" }}>
+    <section id="certifications" style={{ padding: "10vh 5vw", background: "#0A0A0A" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <FadeSection><SectionLabel text="Credentials" /></FadeSection>
         <FadeSection delay={1}><h2 style={{ fontSize: "clamp(24px, 3.5vw, 44px)", fontWeight: 800, marginBottom: 48 }}>Certifications.</h2></FadeSection>
